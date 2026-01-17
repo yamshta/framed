@@ -20,10 +20,16 @@ iOSアプリのスクリーンショット生成プロセスを自動化し、`.
 ```
 framed/
 ├── src/framed/
-│   ├── runner.py      # オーケストレーション (xcodebuild実行)
+│   ├── api.py         # テンプレートインターフェース定義
+│   ├── runner.py      # オーケストレーション (xcodebuild実行、ステータスバー設定)
 │   ├── extractor.py   # .xcresultからの画像抽出
-│   ├── processor.py   # フレーム合成・テキスト追加
-│   └── config.py      # YAML設定読み込み
+│   ├── processor.py   # フレーム合成・テキスト追加（テンプレート委譲）
+│   ├── config.py      # YAML設定読み込み
+│   ├── simctl.py      # Simulator制御ユーティリティ
+│   └── templates/
+│       └── standard/  # 標準テンプレート（フォルダ管理）
+│           ├── __init__.py  # StandardTemplateクラス
+│           └── sample.png   # サンプル出力画像
 ├── resources/
 │   └── bezel.png      # iPhoneベゼル画像（透過PNG）
 ├── README.md          # ユーザー向けドキュメント
@@ -31,6 +37,23 @@ framed/
 ```
 
 ## Core Principles (開発原則)
+
+### 0. テンプレートシステム
+レイアウトロジックを `Template` インターフェースとして抽象化し、各テンプレートはフォルダで管理します：
+
+- **api.py**: `Template` 抽象基底クラスを定義
+- **templates/standard/**: 標準「テキスト上部 + デバイス下部」レイアウト
+  - `__init__.py`: `StandardTemplate` クラス実装
+  - `sample.png`: サンプル出力画像（ドキュメント用）
+
+新しいテンプレート（例: `panoramic/`, `simple/`）を追加する際も同じ構造で管理します。
+
+### 0.5. ステータスバー固定化
+`runner.py` でテスト実行前に以下を実行：
+1. `xcrun simctl boot "デバイス名"` でシミュレータを明示的に起動
+2. `xcrun simctl status_bar "デバイス名" override --time "9:41" ...` で設定
+
+この順序により、プロジェクトの Scheme ファイルを変更せずにステータスバーを制御できます。
 
 ### 1. レイアウト定数
 以下のパラメータレイアウト基準として使用します：
