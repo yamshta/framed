@@ -1,0 +1,8 @@
+name: "standard"
+description: "Classic layout with text at the top and the device at the bottom."
+defaults:
+  background_color: "#F5F5F7"
+  text_color: "#1D1D1F"
+  subtitle_color: "#86868B"
+  font_size_title: 95
+  font_size_subtitle: 45

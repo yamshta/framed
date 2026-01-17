@@ -14,6 +14,7 @@ class Config:
     font_bold: str = None
     font_regular: str | None = None
     template: str = 'standard'
+    template_defaults: Dict[str, Any] = None
 
 def load_config(path: str = "framed.yaml") -> Config:
     """Load configuration from a YAML file"""
@@ -25,6 +26,31 @@ def load_config(path: str = "framed.yaml") -> Config:
     
     # Parse root objects
     config_section = data.get('config', {})
+    template_name = config_section.get('template', 'standard')
+    
+    # Load Template Defaults
+    template_config_path = Path(__file__).parent / "templates" / template_name / "template.yaml"
+    template_defaults = {}
+    
+    if template_config_path.exists():
+        try:
+            with open(template_config_path, 'r', encoding='utf-8') as f:
+                tmpl_data = yaml.safe_load(f)
+                template_defaults = tmpl_data.get('defaults', {})
+                # print(f"  📄 Loaded defaults from {template_name} template")
+        except Exception as e:
+            print(f"⚠️ Failed to load template config: {e}")
+
+    # Merge Defaults into Global Config (User config overrides defaults)
+    # We don't overwrite the 'raw_config' directly because it preserves structure,
+    # but we can inject defaults into the 'config' section if missing?
+    # Better approach: We pass 'template_defaults' to the Config object or merge them now.
+    
+    # Let's merge defaults into 'config_section' for global settings
+    # And we also need to apply these defaults to each screenshot if not present?
+    # Actually, Processor does the lookup. So if we put defaults in 'raw_config', Processor can find them?
+    # No, Processor looks at 'meta' (screenshot config). It falls back to defaults if not found.
+    # So we should inject template_defaults into the Config object so Processor can use them as fallback.
     
     return Config(
         project=config_section.get('project'),
@@ -32,8 +58,9 @@ def load_config(path: str = "framed.yaml") -> Config:
         output_dir=config_section.get('output_dir', 'docs/screenshots'),
         font_bold=config_section.get('font_path_title') or config_section.get('font_bold'),
         font_regular=config_section.get('font_path_subtitle') or config_section.get('font_regular'),
-        template=config_section.get('template', 'standard'),
+        template=template_name,
         devices=data.get('devices', []),
         languages=data.get('languages', ['en']),
-        raw_config=data
+        raw_config=data, # Keeps original structure
+        template_defaults=template_defaults # New field
     )

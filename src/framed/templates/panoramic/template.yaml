@@ -1,0 +1,9 @@
+name: "panoramic"
+description: "Layout with a continuous panoramic wave background connecting screenshots."
+defaults:
+  background_color: "#F5F5F7"
+  text_color: "#1D1D1F"
+  subtitle_color: "#86868B"
+  panoramic_color: "#C7C7CC"
+  font_size_title: 95
+  font_size_subtitle: 45
