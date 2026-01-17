@@ -135,7 +135,13 @@ config:
 ```
 
 ### 設定項目の確認
-使用するテンプレートで利用可能な設定（`template_settings` キー）を確認するには、以下のコマンドを使用します：
+利用可能なテンプレート一覧を表示するには：
+
+```bash
+framed list-templates
+```
+
+特定のテンプレートの設定項目（`template_settings` キー）を確認するには：
 
 ```bash
 framed template-help --name panoramic
