@@ -1,6 +1,6 @@
 from PIL import Image, ImageDraw, ImageFont
-from ..api import Template
-from ..config import Config
+from ...api import Template
+from ...config import Config
 
 class StandardTemplate(Template):
     """

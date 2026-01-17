@@ -33,6 +33,11 @@ class Runner:
                 with tempfile.TemporaryDirectory(prefix="framed_xcresult_") as temp_dir:
                     result_bundle_path = Path(temp_dir) / f"Test.xcresult"
                     
+                    try:
+                        Simctl.set_status_bar("booted")
+                    except Exception:
+                        pass # Ignore if no booted device found, xcodebuild will launch it later (retry logic would be better but keeping simple)
+
                     cmd = [
                         "xcodebuild", "test",
                         "-scheme", scheme,
