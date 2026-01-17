@@ -1,25 +1,42 @@
 [build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
 
 [project]
 name = "framed-cli"
 version = "0.1.0"
-description = "Automated App Store screenshot tool for iOS"
+description = "Automated App Store screenshot generator for iOS"
 readme = "README.md"
 requires-python = ">=3.10"
-license = { text = "MIT" }
+license = {file = "LICENSE"}
 authors = [
-  { name = "yamshta" },
+  {name = "Koe Team", email = "dev@koe.app"}
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Topic :: Software Development :: Build Tools",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: MacOS :: MacOS X",
 ]
 dependencies = [
-  "Pillow>=10.0.0",
-  "PyYAML>=6.0",
-  "click>=8.0.0",
+    "click>=8.0",
+    "Pillow>=9.0",
+    "PyYAML>=6.0",
 ]
 
 [project.scripts]
 framed = "framed.cli:main"
 
-[tool.hatch.build.targets.wheel]
-packages = ["src/framed"]
+[project.urls]
+Homepage = "https://github.com/yamshta/framed"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["framed*"]
+
+[tool.setuptools.package-data]
+framed = ["templates/**/*.yaml", "templates/**/*.png", "resources/*.png"]

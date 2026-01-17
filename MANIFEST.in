@@ -1,0 +1,5 @@
+include README.md
+include AGENTS.md
+include LICENSE
+recursive-include src/framed/templates *.yaml *.png
+recursive-include src/framed/resources *.png
