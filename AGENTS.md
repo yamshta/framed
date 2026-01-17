@@ -202,4 +202,6 @@ screenshots:
 ## Additional Resources (追加リソース)
 
 - **ユーザー向けREADME**: `README.md`
+- **テンプレート作成ガイド**: `TEMPLATES.md`
+- **パッケージングガイド**: `docs/PACKAGING.md`
 - **Pillow Documentation**: https://pillow.readthedocs.io/
