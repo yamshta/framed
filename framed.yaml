@@ -1,0 +1,32 @@
+config:
+  output_dir: "screenshots_framed"
+  project: "YourApp.xcodeproj"
+  scheme: "YourApp-Scheme"
+  
+  # Custom fonts (Optional)
+  # If not specified, tries to use system "Hiragino Sans" (macOS)
+  # font_bold: "/System/Library/Fonts/ヒラギノ角ゴシック W8.ttc"
+  # font_regular: "/System/Library/Fonts/ヒラギノ角ゴシック W6.ttc"
+
+devices:
+  - name: "iPhone 17"
+    id: "BOOTED" # "BOOTED" uses the currently open simulator, or specify UUID
+
+languages:
+  - en
+  - ja
+
+screenshots:
+  "example_screen_key":
+    # Visual Style
+    background_color: "#F5F5F7"
+    text_color: "#1D1D1F"
+    subtitle_color: "#86868B"
+    
+    # Text Content (Keys match languages list)
+    title:
+      en: "English Title"
+      ja: "日本語タイトル"
+    subtitle:
+      en: "Subtitle description goes here."
+      ja: "サブタイトルの説明文が入ります。"
