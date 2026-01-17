@@ -91,7 +91,12 @@ screenshots:
 ```
 
 ### 3. 設定の確認
-テンプレートごとに利用可能な設定（`template_settings`）を確認するには、以下のコマンドを使用します：
+利用可能なテンプレート一覧を表示するには：
+```bash
+framed list-templates
+```
+
+テンプレートごとの利用可能な設定（`template_settings`）を確認するには：
 
 ```bash
 framed template-help --name panoramic
