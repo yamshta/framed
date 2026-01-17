@@ -27,6 +27,37 @@ def run():
         click.echo(f"❌ Error: {e}", err=True)
         sys.exit(1)
 
+@main.command(name="list-templates")
+def list_templates():
+    """List all available templates"""
+    from pathlib import Path
+    import yaml
+    
+    templates_dir = Path(__file__).parent / "templates"
+    if not templates_dir.exists():
+        click.echo("❌ No templates found.")
+        return
+        
+    click.echo("\n📋 Available Templates:\n")
+    
+    for item in templates_dir.iterdir():
+        if item.is_dir() and not item.name.startswith('__'):
+            config_path = item / "template.yaml"
+            desc = "No description available"
+            
+            if config_path.exists():
+                try:
+                    with open(config_path, 'r', encoding='utf-8') as f:
+                        data = yaml.safe_load(f)
+                        desc = data.get('description', desc)
+                except:
+                    pass
+            
+            click.echo(f"  ✨ {item.name}:")
+            click.echo(f"      {desc}")
+
+    click.echo("")
+
 @main.command(name="template-help")
 @click.option('--name', default='standard', help='Name of the template to inspect')
 def template_help(name):
