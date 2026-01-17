@@ -11,6 +11,7 @@ XCUITestの実行から画像抽出、デバイスフレーム合成、テキス
 *   **名前ベース設定**: SwiftUI / XCUITest コード内で指定した `attachment.name` をキーに、YAMLで各画面の設定を管理
 *   **App Store標準出力**: iPhone 15 Pro Max (6.7") 形式 (1290x2796) で自動出力
 *   **テンプレートシステム**: 複数のレイアウトスタイルに対応可能な拡張可能アーキテクチャ
+*   **グローバル設定上書き**: プロジェクト共通の設定（色、フォント等）を一括管理し、個別画面のみ上書き可能
 *   **クリーン**: 中間ファイル（`.xcresult`）を一時ディレクトリで処理し、プロジェクトを汚さない
 
 ## 🚀 インストール
@@ -51,6 +52,13 @@ func testCaptureInbox() {
 プロジェクトルートに `framed.yaml` を作成し、プロジェクト設定と各画面のメタデータを定義します。
 
 ```yaml
+# テンプレート設定（ルートレベル）
+template: "panoramic"
+template_settings:
+  panoramic_color: "#E5E5EA" # プロジェクト全体でパノラマ背景色を統一
+  text_color: "#000000"
+
+# 基本設定
 config:
   output_dir: "docs/screenshots_framed"
   project: "MyApp.xcodeproj"
@@ -65,9 +73,7 @@ languages:
 
 screenshots:
   "inbox":  # XCUITest で指定した attachment.name と一致
-    background_color: "#F5F5F7"
-    text_color: "#1D1D1F"
-    subtitle_color: "#86868B"
+    # 個別設定（必要な場合のみ上書き）
     title:
       ja: "ふたりの距離が\n近くなる"
       en: "Stay close\nwith your loved one"
@@ -76,9 +82,6 @@ screenshots:
       en: "Know each other's day"
   
   "home_empty":
-    background_color: "#F5F5F7"
-    text_color: "#1D1D1F"
-    subtitle_color: "#86868B"
     title:
       ja: "1日3問\n声で答えるだけ"
       en: "Just 3 questions daily\nwith your voice"
@@ -87,7 +90,14 @@ screenshots:
       en: "Guided by questions"
 ```
 
-### 3. デバイスベゼルの配置
+### 3. 設定の確認
+テンプレートごとに利用可能な設定（`template_settings`）を確認するには、以下のコマンドを使用します：
+
+```bash
+framed template-help --name panoramic
+```
+
+### 4. デバイスベゼルの配置
 
 iPhoneのベゼル画像（透過PNG）を `resources/bezel.png` に配置します。
 標準的なiPhoneフレーム画像を使用してください。
