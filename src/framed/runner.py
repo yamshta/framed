@@ -33,10 +33,33 @@ class Runner:
                 with tempfile.TemporaryDirectory(prefix="framed_xcresult_") as temp_dir:
                     result_bundle_path = Path(temp_dir) / f"Test.xcresult"
                     
+                    # Explicitly boot the device first (ensures it's running and we can set status bar)
+                    device_name = device['name']
+                    print(f"    🚀 Booting device: {device_name}...")
                     try:
-                        Simctl.set_status_bar("booted")
+                        # Boot device by name (will fail if already booted, which is fine)
+                        subprocess.run(["xcrun", "simctl", "boot", device_name], 
+                                     capture_output=True, check=False)
                     except Exception:
-                        pass # Ignore if no booted device found, xcodebuild will launch it later (retry logic would be better but keeping simple)
+                        pass  # Already booted
+
+                    # Set status bar to fixed time (device is now guaranteed to be booted)
+                    print(f"    🕐 Setting status bar to 9:41...")
+                    try:
+                        # Use device name instead of "booted" for more precision
+                        subprocess.run([
+                            "xcrun", "simctl", "status_bar", device_name, "override",
+                            "--time", "9:41",
+                            "--batteryState", "charged",
+                            "--batteryLevel", "100",
+                            "--wifiMode", "active",
+                            "--wifiBars", "3",
+                            "--cellularMode", "active",
+                            "--cellularBars", "4"
+                        ], check=True)
+                        print(f"    ✅ Status bar set successfully")
+                    except Exception as e:
+                        print(f"    ⚠️  Failed to set status bar: {e}")
 
                     cmd = [
                         "xcodebuild", "test",
