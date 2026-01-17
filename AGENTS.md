@@ -117,20 +117,28 @@ APP_STORE_SIZE = (1290, 2796)  # 最終出力サイズ (iPhone 15 Pro Max 6.7")
 設定値は以下の順序で解決されます（上が優先）：
 
 1.  **個別スクリーンショット設定** (`framed.yaml` の `screenshots` セクション)
-    - 特定の画面だけテキスト色を変える場合など
-2.  **プロジェクト共通設定** (`framed.yaml` の `template_settings` セクション)
-    - `panoramic_color` を全体で統一する場合など
+2.  **プロジェクト共通設定** (`framed.yaml` のルート `template_settings` セクション)
 3.  **テンプレートデフォルト** (`templates/NAME/template.yaml`)
-    - テンプレート作者が提供する推奨値
 4.  **ハードコードされたフォールバック** (ソースコード内)
 
 ### 設定例 (framed.yaml)
 ```yaml
+# ルートレベルでテンプレートを選択・設定
+template: "panoramic"
+template_settings:
+  panoramic_color: "#FF0000"
+  text_color: "#333333"
+
 config:
-  template: "panoramic"
-  template_settings:
-    panoramic_color: "#FF0000"
-    text_color: "#333333"
+  output_dir: "screenshots_framed"
+  # ...
+```
+
+### 設定項目の確認
+使用するテンプレートで利用可能な設定（`template_settings` キー）を確認するには、以下のコマンドを使用します：
+
+```bash
+framed template-help --name panoramic
 ```
 
 ### 4. フォント処理
