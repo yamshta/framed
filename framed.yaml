@@ -1,3 +1,10 @@
+# Template Configuration (Root Level)
+template: "panoramic"
+template_settings:
+  panoramic_color: "#C7C7CC"
+  text_color: "#1D1D1F"
+  subtitle_color: "#86868B"
+
 config:
   output_dir: "screenshots_framed"
   project: "YourApp.xcodeproj"
@@ -18,10 +25,8 @@ languages:
 
 screenshots:
   "example_screen_key":
-    # Visual Style
-    background_color: "#F5F5F7"
-    text_color: "#1D1D1F"
-    subtitle_color: "#86868B"
+    # Individual Overrides (Optional - defaults inherited from template_settings)
+    # background_color: "#F5F5F7"
     
     # Text Content (Keys match languages list)
     title:
