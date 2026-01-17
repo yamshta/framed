@@ -121,31 +121,7 @@ APP_STORE_SIZE = (1290, 2796)  # 最終出力サイズ (iPhone 15 Pro Max 6.7")
 3.  **テンプレートデフォルト** (`templates/NAME/template.yaml`)
 4.  **ハードコードされたフォールバック** (ソースコード内)
 
-### 設定例 (framed.yaml)
-```yaml
-# ルートレベルでテンプレートを選択・設定
-template: "panoramic"
-template_settings:
-  panoramic_color: "#FF0000"
-  text_color: "#333333"
-
-config:
-  output_dir: "screenshots_framed"
-  # ...
-```
-
-### 設定項目の確認
-利用可能なテンプレート一覧を表示するには：
-
-```bash
-framed list-templates
-```
-
-特定のテンプレートの設定項目（`template_settings` キー）を確認するには：
-
-```bash
-framed template-help --name panoramic
-```
+※ 詳しい設定方法やコマンドの使い方は [README.md](README.md) を参照してください。
 
 ### 4. フォント処理
 `framed.yaml` でフォントを指定可能：
