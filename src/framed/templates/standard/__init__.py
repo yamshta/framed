@@ -40,6 +40,11 @@ class StandardTemplate(Template):
         title_font = self._load_font(95, bold=True)
         subtitle_font = self._load_font(45, bold=False)
         
+        # === Draw Panoramic Background (if enabled) ===
+        if text_config.get('panoramic_background', False):
+            wave_color = text_config.get('panoramic_color', '#C7C7CC')
+            self._draw_panoramic_wave(canvas, wave_color)
+        
         # === Draw Text ===
         current_y = self.HEADER_MARGIN
         
@@ -105,3 +110,46 @@ class StandardTemplate(Template):
                     return ImageFont.truetype(path, size, index=index)
                 except Exception: continue
         return ImageFont.load_default()
+
+    def _draw_panoramic_wave(self, canvas, wave_color):
+        """
+        Draws a multi-layered 'voice-like' waveform across the background using LINES.
+        Ported from original implementation.
+        """
+        import math
+        from PIL import ImageColor
+        
+        draw = ImageDraw.Draw(canvas, 'RGBA')
+        width, height = canvas.size
+        
+        # Wave Configuration
+        base_y = height * 0.70  # Position wave at 70% height
+        
+        # Parse color
+        try:
+            rgb = ImageColor.getrgb(wave_color)
+        except:
+            rgb = (199, 199, 204)  # Default #C7C7CC
+        
+        # Define layers: (amplitude, freq_mult, phase, opacity, stroke_width)
+        layers = [
+            (350, 0.8, 0, 0.2, 16),      # Thick, faint background
+            (250, 1.5, 2.0, 0.4, 10),    # Medium defined wave
+            (180, 2.2, 4.0, 0.7, 6),     # Main sharp voice line
+            (100, 3.0, 6.0, 0.5, 4),     # Accent line
+        ]
+        
+        for amplitude, freq_mult, phase, opacity, stroke_width in layers:
+            rgba_color = rgb + (int(opacity * 255),)
+            points = []
+            
+            # Generate wave points
+            for x in range(width + 1):
+                angle = (x / width) * 2 * math.pi * freq_mult + phase
+                y = base_y + amplitude * math.sin(angle)
+                points.append((x, y))
+            
+            # Draw the wave line
+            if len(points) > 1:
+                draw.line(points, fill=rgba_color, width=stroke_width)
+
