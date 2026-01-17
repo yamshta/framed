@@ -41,6 +41,12 @@ def load_config(path: str = "framed.yaml") -> Config:
         except Exception as e:
             print(f"⚠️ Failed to load template config: {e}")
 
+    # Merge Global Template Settings (User overrides for project-wide consistency)
+    # These override template.yaml defaults but are overridden by specific screenshot config
+    user_template_settings = config_section.get('template_settings', {})
+    if user_template_settings:
+        template_defaults.update(user_template_settings)
+
     # Merge Defaults into Global Config (User config overrides defaults)
     # We don't overwrite the 'raw_config' directly because it preserves structure,
     # but we can inject defaults into the 'config' section if missing?
