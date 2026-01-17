@@ -1,29 +1,21 @@
-from typing import Any, Dict, List, Tuple
-from PIL import Image, ImageDraw
+from abc import ABC, abstractmethod
+from pathlib import Path
+from PIL import Image
 
-class Canvas:
-    """Wrapper around PIL Image to provide simplified drawing API"""
-    def __init__(self, width: int, height: int, bg_color: str = "#FFFFFF"):
-        self.image = Image.new('RGB', (width, height), bg_color)
-        self.draw = ImageDraw.Draw(self.image)
-        self.width = width
-        self.height = height
-
-    def fill(self, color: str):
-        self.draw.rectangle((0, 0, self.width, self.height), fill=color)
-
-    def place_image(self, img: Image.Image, pos: Tuple[int, int]):
-        self.image.paste(img, pos, img if img.mode == 'RGBA' else None)
-
-    def text(self, xy: Tuple[int, int], text: str, font: Any, fill: str):
-        self.draw.text(xy, text, font=font, fill=fill)
-        
-    def save(self, path: str):
-        self.image.save(path)
-
-class Template:
-    """Base class for all layout templates"""
-    name: str = "base"
+class Template(ABC):
+    """Abstract base class for screenshot templates."""
     
-    def render(self, canvas: Canvas, screenshots: List[Image.Image], config: Dict[str, Any]):
-        raise NotImplementedError
+    @abstractmethod
+    def process(self, screenshot: Image.Image, text_config: dict, device_frame: Image.Image | None = None) -> Image.Image:
+        """
+        Process a single screenshot into a final marketing image.
+        
+        Args:
+            screenshot: The raw screenshot image (from simulator)
+            text_config: Dictionary containing title, subtitle, colors, etc.
+            device_frame: Optional pre-composited device frame (if handled externally) or bezel info
+            
+        Returns:
+            The final composed image ready for saving.
+        """
+        pass

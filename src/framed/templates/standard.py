@@ -1,39 +1,107 @@
-from pathlib import Path
-from PIL import Image, ImageFont
-from .api import Template, Canvas
+from PIL import Image, ImageDraw, ImageFont
+from ..api import Template
+from ..config import Config
 
 class StandardTemplate(Template):
-    name = "standard"
+    """
+    The standard "Text Top + Device Bottom" layout.
+    Ported from original KOE workflow.
+    """
     
-    def render(self, canvas: Canvas, screenshots: List[Image.Image], config: Dict[str, Any]):
-        # Config params
-        title = config.get('text', {}).get('title', '')
-        subtitle = config.get('text', {}).get('subtitle', '')
-        font_path = config.get('font', 'Arial.ttf') # fallback needed
+    def __init__(self, config: Config):
+        self.config = config
         
-        # Draw Background
-        # (Already filled by Canvas Init if bg_color passed, but specific override here)
+        # Layout Constants
+        self.CANVAS_WIDTH = 1350
+        self.CANVAS_HEIGHT = 2868
+        self.SCREENSHOT_WIDTH = 1206
+        self.SCREENSHOT_HEIGHT = 2622
+        self.HEADER_MARGIN = 200
+        self.LINE_SPACING = 30
+        self.CAPTION_SPACING = 60
+        self.PHONE_TOP_OFFSET = 150
+        self.APP_STORE_SIZE = (1290, 2796)
+
+    def process(self, screenshot: Image.Image, text_config: dict, device_frame: Image.Image | None = None) -> Image.Image:
+        # Configuration
+        bg_color = text_config.get('background_color', '#F5F5F7')
+        text_color = text_config.get('text_color', '#1D1D1F')
+        subtitle_color = text_config.get('subtitle_color', '#86868B')
         
-        # Load Fonts (Simplified)
-        try:
-            font_title = ImageFont.truetype(font_path, 100)
-            font_sub = ImageFont.truetype(font_path, 50)
-        except:
-            font_title = ImageFont.load_default()
-            font_sub = ImageFont.load_default()
+        # Create canvas
+        canvas = Image.new('RGB', (self.CANVAS_WIDTH, self.CANVAS_HEIGHT), bg_color)
+        draw = ImageDraw.Draw(canvas)
+        
+        # Texts
+        title = text_config.get('title_text', "")
+        subtitle = text_config.get('subtitle_text', "")
+        
+        # Fonts
+        title_font = self._load_font(95, bold=True)
+        subtitle_font = self._load_font(45, bold=False)
+        
+        # === Draw Text ===
+        current_y = self.HEADER_MARGIN
+        
+        # Title
+        if title:
+            lines = title.split('\n')
+            for line in lines:
+                bbox = draw.textbbox((0, 0), line, font=title_font)
+                w = bbox[2] - bbox[0]
+                h = bbox[3] - bbox[1]
+                draw.text(((self.CANVAS_WIDTH - w) / 2, current_y), line, font=title_font, fill=text_color)
+                current_y += h + self.LINE_SPACING
+        
+        current_y += (self.CAPTION_SPACING - self.LINE_SPACING)
+        
+        # Subtitle
+        if subtitle:
+            bbox = draw.textbbox((0, 0), subtitle, font=subtitle_font)
+            w = bbox[2] - bbox[0]
+            draw.text(((self.CANVAS_WIDTH - w) / 2, current_y), subtitle, font=subtitle_font, fill=subtitle_color)
+            current_y += bbox[3] - bbox[1]
             
-        # Draw Title
-        # Basic centering logic
-        w = canvas.width
-        canvas.text((100, 200), title, font_title, "#000000")
-        canvas.text((100, 350), subtitle, font_sub, "#666666")
-        
-        # Place Screenshot
-        if screenshots:
-            shot = screenshots[0]
-            # Resize logic omitted for brevity, assuming standard size
+        # === Place Device ===
+        if device_frame:
+             # Position Phone: Below text with offset
+            phone_y = current_y + self.PHONE_TOP_OFFSET
+            phone_x = (self.CANVAS_WIDTH - device_frame.width) // 2
             
-            # Simple placing
-            x = (w - shot.width) // 2
-            y = 500
-            canvas.place_image(shot, (x, y))
+            # Dynamic scaling if device doesn't fit
+            remaining_height = self.CANVAS_HEIGHT - phone_y
+            if device_frame.height > remaining_height:
+                scale = (remaining_height - 100) / device_frame.height
+                if scale < 1.0:
+                    new_w = int(device_frame.width * scale)
+                    new_h = int(device_frame.height * scale)
+                    device_frame = device_frame.resize((new_w, new_h), Image.Resampling.LANCZOS)
+                    phone_x = (self.CANVAS_WIDTH - new_w) // 2
+            
+            canvas.paste(device_frame, (phone_x, phone_y), device_frame)
+
+        # Final Resize
+        return canvas.resize(self.APP_STORE_SIZE, Image.Resampling.LANCZOS)
+
+    def _load_font(self, size: int, bold: bool = False):
+        # ... logic ported from processor.py ...
+        # Ideally this should be a utility helper, but for now we keep it here or pass from processor
+        # To avoid duplicating logic, we might want to move font loading to a helper or keep it here.
+        # For simplicity in this step, I'll copy the font loading logic but refer to self.config
+        
+        # Reusing the exact logic from existing processor.py
+        import os
+        candidates = []
+        if bold and self.config.font_bold: candidates.append(self.config.font_bold)
+        elif not bold and self.config.font_regular: candidates.append(self.config.font_regular)
+        
+        if bold: candidates.extend(["/System/Library/Fonts/ヒラギノ角ゴシック W8.ttc", "/System/Library/Fonts/Hiragino Sans GB.ttc"])
+        else: candidates.extend(["/System/Library/Fonts/ヒラギノ角ゴシック W6.ttc", "/System/Library/Fonts/Hiragino Sans GB.ttc"])
+            
+        for path in candidates:
+            if os.path.exists(path):
+                try:
+                    index = 0 if path.endswith('.ttc') else 0
+                    return ImageFont.truetype(path, size, index=index)
+                except Exception: continue
+        return ImageFont.load_default()
