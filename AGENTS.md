@@ -44,9 +44,12 @@ framed/
 - **api.py**: `Template` 抽象基底クラスを定義
 - **templates/standard/**: 標準「テキスト上部 + デバイス下部」レイアウト
   - `__init__.py`: `StandardTemplate` クラス実装
-  - `sample.png`: サンプル出力画像（ドキュメント用）
+  - `sample.png`: サンプル出力画像（**必須**）
+- **templates/panoramic/**: パノラマ背景「連続波形 + テキスト + デバイス」レイアウト
+  - `__init__.py`: `PanoramicTemplate` クラス実装
+  - `sample.png`: サンプル出力画像（**必須**）
 
-新しいテンプレート（例: `panoramic/`, `simple/`）を追加する際も同じ構造で管理します。
+**重要**: 新しいテンプレートを追加する際は、必ず `sample.png` を含めてください。これはドキュメント目的と、テンプレートが期待通りに動作することの証明となります。
 
 ### 0.5. ステータスバー固定化
 `runner.py` でテスト実行前に以下を実行：
