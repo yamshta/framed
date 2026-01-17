@@ -4,14 +4,20 @@ from PIL import Image, ImageDraw, ImageFont
 from .config import Config
 
 from .templates.standard import StandardTemplate
+from .templates.panoramic import PanoramicTemplate
 
 class Processor:
     def __init__(self, config: Config):
         self.config = config
         self.bezel_path = Path(__file__).parent.parent.parent / "resources" / "bezel.png"
         
-        # Default Template
-        self.template = StandardTemplate(config)
+        # Select Template
+        if config.template == 'panoramic':
+            self.template = PanoramicTemplate(config)
+            print("  🎨 Using Panoramic Template")
+        else:
+            self.template = StandardTemplate(config)
+            print("  🎨 Using Standard Template")
         
         # Device specific constants for bezel composition
         self.SCREENSHOT_WIDTH = 1206
@@ -44,7 +50,7 @@ class Processor:
                     
                     if key in screenshot_config:
                         meta = screenshot_config[key]
-                        self._process_image(img_path, dst_dir, meta, lang)
+                        self._process_image(img_path, dst_dir, meta, lang, key, screenshot_config)
                     else:
                         print(f"  Skipping {key} (no config entry)")
 
@@ -71,7 +77,7 @@ class Processor:
         else:
             raise ValueError(f"Bezel {bezel.size} is smaller than screenshot {screenshot.size}")
 
-    def _process_image(self, img_path: Path, output_dir: Path, meta: dict, lang: str):
+    def _process_image(self, img_path: Path, output_dir: Path, meta: dict, lang: str, key: str, screenshots_config: dict):
         # Load Screenshot
         screenshot = Image.open(img_path).convert('RGBA')
         
@@ -86,11 +92,28 @@ class Processor:
             'subtitle_text': meta.get('subtitle', {}).get(lang, ""),
             'background_color': meta.get('background_color', '#F5F5F7'),
             'text_color': meta.get('text_color', '#1D1D1F'),
-            'subtitle_color': meta.get('subtitle_color', '#86868B')
+            'subtitle_color': meta.get('subtitle_color', '#86868B'),
+            # Panoramic specific config (passed to all templates, ignored by Standard)
+            'panoramic_color': meta.get('panoramic_color', '#C7C7CC')
         }
         
+        # Calculate Index and Total for Panoramic Context
+        # We need to find the index of this screenshot in the ordered config list
+        screenshot_keys = list(screenshots_config.keys())
+        try:
+            current_index = screenshot_keys.index(key)
+        except ValueError:
+            current_index = 0
+        total_screenshots = len(screenshot_keys)    
+
         # Delegate to Template
-        final_image = self.template.process(screenshot, text_config, device_frame)
+        final_image = self.template.process(
+            screenshot, 
+            text_config, 
+            device_frame, 
+            index=current_index, 
+            total=total_screenshots
+        )
         
         # Save
         out_path = output_dir / img_path.name
