@@ -202,6 +202,9 @@ docs/screenshots_framed/
 
 ## 🎨 カスタマイズ
 
+### テンプレートの作成
+独自のテンプレートを作成したい場合は、[TEMPLATES.md](TEMPLATES.md) を参照してください。
+
 ### フォントの変更
 
 `Processor` クラスの `_load_hiragino_font` メソッドでフォントパスを変更できます。
