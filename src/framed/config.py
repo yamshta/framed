@@ -26,7 +26,9 @@ def load_config(path: str = "framed.yaml") -> Config:
     
     # Parse root objects
     config_section = data.get('config', {})
-    template_name = config_section.get('template', 'standard')
+    
+    # Template Configuration (Root level preferred, fallback to config section)
+    template_name = data.get('template') or config_section.get('template', 'standard')
     
     # Load Template Defaults
     template_config_path = Path(__file__).parent / "templates" / template_name / "template.yaml"
@@ -37,13 +39,12 @@ def load_config(path: str = "framed.yaml") -> Config:
             with open(template_config_path, 'r', encoding='utf-8') as f:
                 tmpl_data = yaml.safe_load(f)
                 template_defaults = tmpl_data.get('defaults', {})
-                # print(f"  📄 Loaded defaults from {template_name} template")
         except Exception as e:
             print(f"⚠️ Failed to load template config: {e}")
 
-    # Merge Global Template Settings (User overrides for project-wide consistency)
-    # These override template.yaml defaults but are overridden by specific screenshot config
-    user_template_settings = config_section.get('template_settings', {})
+    # Merge Global Template Settings
+    # Root level 'template_settings' preferred, fallback to config section
+    user_template_settings = data.get('template_settings') or config_section.get('template_settings', {})
     if user_template_settings:
         template_defaults.update(user_template_settings)
 
