@@ -112,6 +112,26 @@ APP_STORE_SIZE = (1290, 2796)  # 最終出力サイズ (iPhone 15 Pro Max 6.7")
    - テキスト終了位置 + 150px
    - 収まらない場合は自動縮小
 5. **最終リサイズ**: 1350x2868 → **1290x2796** (App Store標準)
+## Configuration Hierarchy (設定の優先順位)
+
+設定値は以下の順序で解決されます（上が優先）：
+
+1.  **個別スクリーンショット設定** (`framed.yaml` の `screenshots` セクション)
+    - 特定の画面だけテキスト色を変える場合など
+2.  **プロジェクト共通設定** (`framed.yaml` の `template_settings` セクション)
+    - `panoramic_color` を全体で統一する場合など
+3.  **テンプレートデフォルト** (`templates/NAME/template.yaml`)
+    - テンプレート作者が提供する推奨値
+4.  **ハードコードされたフォールバック** (ソースコード内)
+
+### 設定例 (framed.yaml)
+```yaml
+config:
+  template: "panoramic"
+  template_settings:
+    panoramic_color: "#FF0000"
+    text_color: "#333333"
+```
 
 ### 4. フォント処理
 `framed.yaml` でフォントを指定可能：
