@@ -89,6 +89,7 @@ class PanoramicTemplate(StandardTemplate):
         """
         Draws a multi-layered 'voice-like' waveform across the background using LINES.
         Calculates global coordinates based on index and width to ensure continuity.
+        The wave amplitude tapers to a single point at both ends of the panorama.
         """
         draw = ImageDraw.Draw(canvas, 'RGBA')
         width, height = canvas.size
@@ -96,6 +97,7 @@ class PanoramicTemplate(StandardTemplate):
         # Wave Configuration
         base_y = height * 0.70
         global_offset = index * width
+        total_width = total_screens * width  # Total panoramic width
         
         # Parse color
         try:
@@ -121,10 +123,15 @@ class PanoramicTemplate(StandardTemplate):
             step = 5
             for x in range(-stroke_width, width + stroke_width + step, step):
                 global_x = global_offset + x
+                
+                # Apply envelope: amplitude tapers to 0 at both ends (global_x=0 and global_x=total_width)
+                # Using sin envelope: 0 at edges, 1 at center
+                envelope_ratio = global_x / total_width  # 0 to 1 across the panorama
+                envelope = math.sin(envelope_ratio * math.pi)  # 0 -> 1 -> 0
+                
                 # Angle is based on global_x relative to a single screen width (for frequency scaling)
-                # But to make it continuous, we must use global_x
                 angle = (global_x / width) * 2 * math.pi * freq_mult + phase
-                y = base_y + amplitude * math.sin(angle)
+                y = base_y + (amplitude * envelope) * math.sin(angle)
                 points.append((x, y))
             
             # Draw the wave line

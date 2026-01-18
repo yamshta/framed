@@ -92,5 +92,91 @@ def template_help(name):
     except Exception as e:
         click.echo(f"❌ Error reading template config: {e}", err=True)
 
+@main.command(name="generate-samples")
+@click.option('--template', '-t', default=None, help='Generate samples for a specific template only')
+def generate_samples(template):
+    """Generate sample images for all (or specific) templates"""
+    from pathlib import Path
+    from .config import load_config, Config
+    from .processor import Processor
+    import shutil
+    
+    templates_dir = Path(__file__).parent / "templates"
+    framed_root = Path(__file__).parent.parent.parent
+    sample_raws = framed_root / "sample_raws" / "ja"
+    
+    if not sample_raws.exists():
+        click.echo(f"❌ sample_raws/ja not found at {sample_raws}")
+        click.echo("   Please add raw screenshots to sample_raws/ja/")
+        return
+    
+    click.echo("\n🎨 Generating samples...\n")
+    
+    generated = 0
+    templates_to_process = []
+    
+    for item in sorted(templates_dir.iterdir()):
+        if item.is_dir() and not item.name.startswith('__'):
+            if template and item.name != template:
+                continue
+            templates_to_process.append(item)
+    
+    if template and not templates_to_process:
+        click.echo(f"❌ Template '{template}' not found")
+        return
+    
+    for item in templates_to_process:
+        samples_dir = item / "samples"
+        framed_yaml = samples_dir / "framed.yaml"
+        
+        if not framed_yaml.exists():
+            click.echo(f"  ⏭️  {item.name}: No samples/framed.yaml, skipping")
+            continue
+        
+        click.echo(f"  📸 {item.name}...")
+        
+        try:
+            # Clean up old sample images first
+            for old_png in samples_dir.glob("*.png"):
+                old_png.unlink()
+            
+            # Create temporary raw directory structure for processing
+            temp_raw_dir = samples_dir / "raw" / "raws_ja"
+            temp_raw_dir.mkdir(parents=True, exist_ok=True)
+            
+            # Copy raw files
+            for png in sample_raws.glob("*.png"):
+                shutil.copy2(png, temp_raw_dir / png.name)
+            
+            # Load config and process
+            import os
+            original_cwd = os.getcwd()
+            os.chdir(samples_dir)
+            
+            try:
+                config = load_config("framed.yaml")
+                processor = Processor(config)
+                processor.process()
+                
+                # Copy output to samples root
+                output_dir = samples_dir / "framed" / "raws_ja"
+                if output_dir.exists():
+                    for png in output_dir.glob("*.png"):
+                        dest = samples_dir / png.name
+                        shutil.copy2(png, dest)
+                        generated += 1
+                
+                click.echo(f"     ✅ Done")
+            finally:
+                os.chdir(original_cwd)
+                # Cleanup temp directories
+                shutil.rmtree(samples_dir / "raw", ignore_errors=True)
+                shutil.rmtree(samples_dir / "framed", ignore_errors=True)
+                
+        except Exception as e:
+            click.echo(f"     ❌ Error: {e}")
+    
+    click.echo(f"\n✅ Generated {generated} sample images")
+
 if __name__ == "__main__":
     main()

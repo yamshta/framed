@@ -10,7 +10,26 @@ Framed は拡張性を考慮して設計されています。`src/framed/templat
 src/framed/templates/<template_name>/
 ├── __init__.py       # テンプレートクラスの実装
 ├── template.yaml     # デフォルト設定値
-└── sample.png        # テンプレートのプレビュー画像（必須）
+└── samples/          # サンプル出力とテスト用設定
+    ├── framed.yaml   # サンプル生成用の設定ファイル
+    ├── raw/          # -> sample_raws/ja/ へのシンボリックリンク
+    └── *.png         # 生成されたサンプル画像
+```
+
+### 共有素材ディレクトリ
+
+全テンプレートで共通の生スクリーンショットは `sample_raws/` に配置します：
+
+```
+framed/
+├── sample_raws/
+│   └── ja/                 # 日本語用の生スクリーンショット
+│       ├── onboarding.png
+│       ├── home_empty.png
+│       └── ...
+└── src/framed/templates/
+    └── <template_name>/samples/
+        └── raw/ -> ../../../../../../sample_raws/ja  # シンボリックリンク
 ```
 
 ## 1. 実装 (`__init__.py`)
@@ -73,13 +92,69 @@ defaults:
 framed template-help --name <template_name>
 ```
 
-## 3. サンプル画像 (`sample.png` または `samples/`)
+## 3. サンプル (`samples/`)
 
-テンプレートのプレビュー用に、以下のいずれかを含めてください：
+各テンプレートの `samples/` ディレクトリには以下を含めます：
 
-*   `sample.png`: 1枚の代表的なサンプル画像
-*   `samples/`: 複数のサンプル画像を含むディレクトリ（例: `01_inbox.png`, `02_home.png`...）。
+1. **`framed.yaml`**: サンプル生成用の設定ファイル
+2. **`raw/`**: 共有素材へのシンボリックリンク
+3. **生成されたサンプル画像** (`.png`)
 
-特に「Perspective Flow」や「Panoramic」のように複数のスクリーンショットで構成されるテンプレートや、枚数によって挙動が変わる場合（例：4枚目以降は標準レイアウトになる）は、流れがわかるように**4枚程度のサンプル画像**を用意することを強く推奨します。
+### サンプル生成方法
 
-これらはユーザー（および開発者）がテンプレートの外観を把握するためのプレビューとして機能します。
+新しい `framed generate-samples` コマンドを使用すると、全テンプレート（または特定のテンプレート）のサンプルを一括生成できます。
+
+```bash
+# 全テンプレートのサンプルを生成
+framed generate-samples
+
+# 特定のテンプレートのみ生成
+framed generate-samples --template cascade
+```
+
+このコマンドは自動的に以下の処理を行います：
+1. `sample_raws/ja/` から生スクリーンショットを読み込み
+2. 既存のサンプル画像をクリーンアップ
+3. 各テンプレートの `samples/framed.yaml` に基づいて生成
+4. 一時ファイルを削除
+
+手動で生成する場合は、各ディレクトリで以下を実行します：
+```bash
+cd src/framed/templates/<template_name>/samples
+framed run --skip-capture
+```
+
+## 4. Cascade テンプレート（グループ機能）
+
+Cascade テンプレートは複数のスクリーンショットを1枚の画像に合成します。
+`groups` キーを使用して、どのスクリーンショットをグループ化するかを定義します：
+
+```yaml
+template: "cascade"
+
+groups:
+  - output: "01_cascade.png"
+    screens: ["onboarding", "home_empty", "recording"]
+    template: "cascade"
+  - output: "02_inbox.png"
+    screens: ["inbox"]
+    template: "standard"
+```
+
+### CascadeTemplate クラス
+
+```python
+class CascadeTemplate(StandardTemplate):
+    def process_group(self, device_frames: list[Image.Image], text_configs: list[dict], lang: str) -> Image.Image:
+        """複数のデバイスフレームを1枚の画像に合成"""
+        ...
+```
+
+## 利用可能なテンプレート
+
+| テンプレート | 説明 |
+|---|---|
+| `standard` | 基本レイアウト（タイトル + サブタイトル + 中央デバイス） |
+| `panoramic` | 連続する波形背景を持つレイアウト |
+| `perspective` | パースペクティブ変形 + パノラマ背景 |
+| `cascade` | 複数デバイスをカスケード状に配置 |

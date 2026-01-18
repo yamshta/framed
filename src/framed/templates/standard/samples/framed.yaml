@@ -1,0 +1,48 @@
+# Standard Template Sample Configuration
+# Run from this directory: framed run --skip-capture
+
+template: "standard"
+template_settings:
+  text_color: "#000000"
+  subtitle_color: "#86868B"
+
+config:
+  output_dir: "."
+  project: "N/A"
+  scheme: "N/A"
+
+devices:
+  - name: "raws"
+    id: "N/A"
+
+languages:
+  - ja
+
+screenshots:
+  "onboarding":
+    background_color: "#F5F5F7"
+    title:
+      ja: "書かずに残す\n声の日記"
+    subtitle:
+      ja: "話すだけで想いが残る"
+
+  "home_empty":
+    background_color: "#F5F5F7"
+    title:
+      ja: "1日3問\n声で答えるだけ"
+    subtitle:
+      ja: "質問があるから迷わない"
+
+  "recording":
+    background_color: "#F5F5F7"
+    title:
+      ja: "タップして\n話しかける"
+    subtitle:
+      ja: "声を自動で文字にします"
+
+  "inbox":
+    background_color: "#F5F5F7"
+    title:
+      ja: "ふたりの距離が\n近くなる"
+    subtitle:
+      ja: "離れていても相手の今日がわかる"

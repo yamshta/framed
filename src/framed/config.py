@@ -15,6 +15,7 @@ class Config:
     font_regular: str | None = None
     template: str = 'standard'
     template_defaults: Dict[str, Any] = None
+    groups: List[Dict[str, Any]] = None  # For multi-device cascade output
 
 def load_config(path: str = "framed.yaml") -> Config:
     """Load configuration from a YAML file"""
@@ -69,5 +70,6 @@ def load_config(path: str = "framed.yaml") -> Config:
         devices=data.get('devices', []),
         languages=data.get('languages', ['en']),
         raw_config=data, # Keeps original structure
-        template_defaults=template_defaults # New field
+        template_defaults=template_defaults, # New field
+        groups=data.get('groups', None)  # Multi-device cascade groups
     )

@@ -6,6 +6,7 @@ from .config import Config
 from .templates.standard import StandardTemplate
 from .templates.panoramic import PanoramicTemplate
 from .templates.perspective import PerspectiveTemplate
+from .templates.cascade import CascadeTemplate
 
 class Processor:
     def __init__(self, config: Config):
@@ -19,6 +20,9 @@ class Processor:
         elif config.template == 'perspective':
             self.template = PerspectiveTemplate(config)
             print("  🎨 Using Perspective Template")
+        elif config.template == 'cascade':
+            self.template = CascadeTemplate(config)
+            print("  🎨 Using Cascade Template")
         else:
             self.template = StandardTemplate(config)
             print("  🎨 Using Standard Template")
@@ -49,14 +53,71 @@ class Processor:
                 print(f"🎨 Processing {dev_name} ({lang})...")
                 dst_dir.mkdir(parents=True, exist_ok=True)
                 
-                for img_path in src_dir.glob("*.png"):
-                    key = img_path.stem 
-                    
-                    if key in screenshot_config:
-                        meta = screenshot_config[key]
-                        self._process_image(img_path, dst_dir, meta, lang, key, screenshot_config)
-                    else:
-                        print(f"  Skipping {key} (no config entry)")
+                # Check for group-based processing
+                if self.config.groups:
+                    self._process_groups(src_dir, dst_dir, screenshot_config, lang)
+                else:
+                    # Fallback to individual screenshot processing
+                    for img_path in src_dir.glob("*.png"):
+                        key = img_path.stem 
+                        
+                        if key in screenshot_config:
+                            meta = screenshot_config[key]
+                            self._process_image(img_path, dst_dir, meta, lang, key, screenshot_config)
+                        else:
+                            print(f"  Skipping {key} (no config entry)")
+
+    def _process_groups(self, src_dir: Path, output_dir: Path, screenshot_config: dict, lang: str):
+        """Process screenshots as defined groups (for cascade/composite templates)."""
+        for group in self.config.groups:
+            output_name = group.get('output', 'output.png')
+            screen_keys = group.get('screens', [])
+            group_template = group.get('template', self.config.template)
+            
+            # Collect device frames and text configs for this group
+            device_frames = []
+            text_configs = []
+            
+            for key in screen_keys:
+                img_path = src_dir / f"{key}.png"
+                if not img_path.exists():
+                    print(f"  ⚠️ Image not found: {key}.png, skipping from group")
+                    continue
+                
+                meta = screenshot_config.get(key, {})
+                
+                # Load and prepare device frame
+                screenshot = Image.open(img_path).convert('RGBA')
+                screenshot_resized = screenshot.resize((self.SCREENSHOT_WIDTH, self.SCREENSHOT_HEIGHT), Image.Resampling.LANCZOS)
+                device_frame = self._create_device_frame(screenshot_resized)
+                device_frames.append(device_frame)
+                
+                # Prepare text config
+                defaults = self.config.template_defaults or {}
+                text_config = defaults.copy()
+                if 'background_color' in meta: text_config['background_color'] = meta['background_color']
+                if 'text_color' in meta: text_config['text_color'] = meta['text_color']
+                if 'subtitle_color' in meta: text_config['subtitle_color'] = meta['subtitle_color']
+                text_config['title_text'] = meta.get('title', {}).get(lang, "")
+                text_config['subtitle_text'] = meta.get('subtitle', {}).get(lang, "")
+                text_configs.append(text_config)
+            
+            if not device_frames:
+                print(f"  ⚠️ No valid frames for group '{output_name}', skipping")
+                continue
+            
+            # Select template for this group
+            if group_template == 'cascade':
+                template = CascadeTemplate(self.config)
+                final_image = template.process_group(device_frames, text_configs, lang)
+            else:
+                # For non-cascade templates with groups, process first screen only
+                final_image = self.template.process(None, text_configs[0], device_frames[0], 0, 1)
+            
+            # Save
+            out_path = output_dir / output_name
+            final_image.save(out_path, quality=95)
+            print(f"  ✅ Generated {output_name}")
 
     def _create_device_frame(self, screenshot):
         """Create device frame by compositing screenshot with bezel."""
@@ -125,6 +186,9 @@ class Processor:
         )
         
         # Save
-        out_path = output_dir / img_path.name
+        # Prefix with index to ensure order (e.g. 01_inbox.png)
+        # Use 1-based indexing for display
+        prefix = f"{current_index + 1:02d}_"
+        out_path = output_dir / (prefix + img_path.name)
         final_image.save(out_path, quality=95)
         print(f"  ✅ Generated {out_path.name}")

@@ -22,15 +22,28 @@ pip install -e .
 ```
 
 ## 💻 コマンド一覧
-22: 
-23: | コマンド | 説明 |
-24: | --- | --- |
-25: | `framed init` | 初期化（`framed.yaml` のひな形作成） |
-26: | `framed run` | スクリーンショット生成の全工程を実行 |
-27: | `framed list-templates` | 利用可能なテンプレート一覧を表示 |
-28: | `framed template-help` | テンプレートごとの設定項目を表示 |
-29: 
-30: ## 📖 使い方
+
+| コマンド | 説明 |
+| --- | --- |
+| `framed init` | 初期化（`framed.yaml` のひな形作成） |
+| `framed run` | スクリーンショット生成の全工程を実行 |
+| `framed list-templates` | 利用可能なテンプレート一覧を表示 |
+| `framed template-help` | テンプレートごとの設定項目を表示 |
+| `framed generate-samples` | 全テンプレートのサンプル画像を生成 |
+
+### サンプル画像の生成
+
+テンプレートのサンプル画像を生成するには `generate-samples` コマンドを使用します。
+
+```bash
+# 全テンプレートのサンプルを生成
+framed generate-samples
+
+# 特定のテンプレートのみ生成
+framed generate-samples --template cascade
+```
+
+## 📖 使い方
 
 ### 1. UITestコードの準備
 
@@ -116,7 +129,7 @@ framed template-help --name panoramic
 iPhoneのベゼル画像（透過PNG）を `resources/bezel.png` に配置します。
 標準的なiPhoneフレーム画像を使用してください。
 
-### 4. 実行
+### 5. 実行
 
 ```bash
 framed run
