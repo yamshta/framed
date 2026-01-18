@@ -11,6 +11,7 @@ class Config:
     devices: List[Dict[str, str]]
     languages: List[str]
     raw_config: Dict[str, Any]
+    raw_dir: str | None = None  # Optional custom raw directory path
     font_bold: str = None
     font_regular: str | None = None
     template: str = 'standard'
@@ -64,6 +65,7 @@ def load_config(path: str = "framed.yaml") -> Config:
         project=config_section.get('project'),
         scheme=config_section.get('scheme'),
         output_dir=config_section.get('output_dir', 'docs/screenshots'),
+        raw_dir=config_section.get('raw_dir'),  # Optional custom raw directory
         font_bold=config_section.get('font_path_title') or config_section.get('font_bold'),
         font_regular=config_section.get('font_path_subtitle') or config_section.get('font_regular'),
         template=template_name,

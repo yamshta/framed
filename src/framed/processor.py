@@ -6,7 +6,6 @@ from .config import Config
 from .templates.standard import StandardTemplate
 from .templates.panoramic import PanoramicTemplate
 from .templates.perspective import PerspectiveTemplate
-from .templates.cascade import CascadeTemplate
 
 class Processor:
     def __init__(self, config: Config):
@@ -20,9 +19,6 @@ class Processor:
         elif config.template == 'perspective':
             self.template = PerspectiveTemplate(config)
             print("  🎨 Using Perspective Template")
-        elif config.template == 'cascade':
-            self.template = CascadeTemplate(config)
-            print("  🎨 Using Cascade Template")
         else:
             self.template = StandardTemplate(config)
             print("  🎨 Using Standard Template")
@@ -33,7 +29,12 @@ class Processor:
 
     def process(self):
         """Apply frames and text to extracted screenshots."""
-        raw_dir = Path(self.config.output_dir) / "raw"
+        # Use custom raw_dir if specified, otherwise default to output_dir/raw
+        if self.config.raw_dir:
+            raw_dir = Path(self.config.raw_dir)
+        else:
+            raw_dir = Path(self.config.output_dir) / "raw"
+        
         final_dir = Path(self.config.output_dir) / "framed"
         
         screenshot_config = self.config.raw_config.get('screenshots', {})
@@ -44,8 +45,19 @@ class Processor:
         for device in self.config.devices:
             dev_name = device['name']
             for lang in self.config.languages:
-                src_dir = raw_dir / f"{dev_name}_{lang}"
-                dst_dir = final_dir / f"{dev_name}_{lang}"
+                # If raw_dir is set and points to a specific directory, use it directly
+                # Otherwise use the traditional {device}_{lang} naming
+                if self.config.raw_dir and not dev_name:
+                    # raw_dir points directly to screenshots (e.g., raw_samples/ja/)
+                    # lang might be empty string to avoid double suffix
+                    src_dir = raw_dir
+                    # For output, use a clean name
+                    output_suffix = lang if lang else "ja"  # Fallback to 'ja' if lang is empty
+                    dst_dir = final_dir / output_suffix
+                else:
+                    # Traditional behavior: raw/device_lang/
+                    src_dir = raw_dir / f"{dev_name}_{lang}"
+                    dst_dir = final_dir / f"{dev_name}_{lang}"
                 
                 if not src_dir.exists():
                     continue
@@ -56,23 +68,32 @@ class Processor:
                 # Check for group-based processing
                 if self.config.groups:
                     self._process_groups(src_dir, dst_dir, screenshot_config, lang)
-                else:
-                    # Fallback to individual screenshot processing
-                    for img_path in src_dir.glob("*.png"):
-                        key = img_path.stem 
-                        
-                        if key in screenshot_config:
-                            meta = screenshot_config[key]
-                            self._process_image(img_path, dst_dir, meta, lang, key, screenshot_config)
-                        else:
-                            print(f"  Skipping {key} (no config entry)")
+
+                # Process individual screenshots (always check, don't fallback)
+                # Iterate through CONFIG items, not files, to support source_key aliasing
+                for key, meta in screenshot_config.items():
+                    source_key = meta.get('source_key', key)
+                    img_path = src_dir / f"{source_key}.png"
+                    
+                    if not img_path.exists():
+                         # Only warn if it's NOT part of a group? 
+                         # Actually usually we want silent skip for things used only in groups, 
+                         # BUT here we are iterating config. If it's in config, we expect to process it.
+                         # However, some keys ("onboarding") might be JUST for groups and have no output config?
+                         # In samples framed.yaml, "onboarding" is in screenshots.
+                         # If it's in screenshots, we try to process it.
+                         # If image missing, we skip.
+                         print(f"  Skipping {key} (Source image {source_key}.png not found)")
+                         continue
+                         
+                    self._process_image(img_path, dst_dir, meta, lang, key, screenshot_config)
 
     def _process_groups(self, src_dir: Path, output_dir: Path, screenshot_config: dict, lang: str):
-        """Process screenshots as defined groups (for cascade/composite templates)."""
+        """Process screenshots as defined groups (for composite templates)."""
         for group in self.config.groups:
             output_name = group.get('output', 'output.png')
             screen_keys = group.get('screens', [])
-            group_template = group.get('template', self.config.template)
+            group_template_name = group.get('template', self.config.template)
             
             # Collect device frames and text configs for this group
             device_frames = []
@@ -98,6 +119,7 @@ class Processor:
                 if 'background_color' in meta: text_config['background_color'] = meta['background_color']
                 if 'text_color' in meta: text_config['text_color'] = meta['text_color']
                 if 'subtitle_color' in meta: text_config['subtitle_color'] = meta['subtitle_color']
+                if 'panoramic_color' in meta: text_config['panoramic_color'] = meta['panoramic_color']
                 text_config['title_text'] = meta.get('title', {}).get(lang, "")
                 text_config['subtitle_text'] = meta.get('subtitle', {}).get(lang, "")
                 text_configs.append(text_config)
@@ -107,11 +129,17 @@ class Processor:
                 continue
             
             # Select template for this group
-            if group_template == 'cascade':
-                template = CascadeTemplate(self.config)
+            # Currently only PerspectiveTemplate supports groups specifically
+            if group_template_name == 'perspective':
+                # Re-instantiate to ensure fresh state if needed, or stick with self.template if it is PerspectiveTemplate
+                if isinstance(self.template, PerspectiveTemplate):
+                    template = self.template
+                else:
+                    template = PerspectiveTemplate(self.config)
+                    
                 final_image = template.process_group(device_frames, text_configs, lang)
             else:
-                # For non-cascade templates with groups, process first screen only
+                # For non-group-aware templates, process first screen only as fallback
                 final_image = self.template.process(None, text_configs[0], device_frames[0], 0, 1)
             
             # Save
@@ -188,7 +216,18 @@ class Processor:
         # Save
         # Prefix with index to ensure order (e.g. 01_inbox.png)
         # Use 1-based indexing for display
-        prefix = f"{current_index + 1:02d}_"
-        out_path = output_dir / (prefix + img_path.name)
+        # Prefix with index to ensure order (e.g. 01_inbox.png)
+        # Use 1-based indexing for display
+        # If output file name is specified (e.g. custom key), use that.
+        # But for list generation, we often want numbering.
+        # However, if 'key' is "1", "2", etc., use that directly.
+        
+        if key.isdigit():
+            out_filename = f"{key}.png"
+        else:
+            prefix = f"{current_index + 1:02d}_"
+            out_filename = prefix + key + ".png"
+            
+        out_path = output_dir / out_filename
         final_image.save(out_path, quality=95)
         print(f"  ✅ Generated {out_path.name}")

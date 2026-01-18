@@ -23,7 +23,7 @@ src/framed/templates/<template_name>/
 ```
 framed/
 ├── sample_raws/
-│   └── ja/                 # 日本語用の生スクリーンショット
+├── ja/                 # 日本語用の生スクリーンショット
 │       ├── onboarding.png
 │       ├── home_empty.png
 │       └── ...
@@ -109,7 +109,7 @@ framed template-help --name <template_name>
 framed generate-samples
 
 # 特定のテンプレートのみ生成
-framed generate-samples --template cascade
+framed generate-samples --template perspective
 ```
 
 このコマンドは自動的に以下の処理を行います：
@@ -124,29 +124,27 @@ cd src/framed/templates/<template_name>/samples
 framed run --skip-capture
 ```
 
-## 4. Cascade テンプレート（グループ機能）
+## 4. Perspective テンプレート（グループ・コンポジット機能）
 
-Cascade テンプレートは複数のスクリーンショットを1枚の画像に合成します。
-`groups` キーを使用して、どのスクリーンショットをグループ化するかを定義します：
+Perspective テンプレートは、単一の3D変形レイアウトに加え、複数のスクリーンショットを1枚の画像に合成する機能（TARIRU風対角線レイアウト）をサポートしています。
+
+`groups` キーを使用して、複数のスクリーンショットを指定します：
 
 ```yaml
-template: "cascade"
+template: "perspective"
 
 groups:
-  - output: "01_cascade.png"
-    screens: ["onboarding", "home_empty", "recording"]
-    template: "cascade"
-  - output: "02_inbox.png"
-    screens: ["inbox"]
-    template: "standard"
+  - output: "perspective_composite.png"
+    screens: ["onboarding", "home_empty", "inbox"]
+    template: "perspective"
 ```
 
-### CascadeTemplate クラス
+### PerspectiveTemplate クラス
 
 ```python
-class CascadeTemplate(StandardTemplate):
+class PerspectiveTemplate(PanoramicTemplate):
     def process_group(self, device_frames: list[Image.Image], text_configs: list[dict], lang: str) -> Image.Image:
-        """複数のデバイスフレームを1枚の画像に合成"""
+        """複数のデバイスフレームをTARIRU風の対角線レイアウトで合成"""
         ...
 ```
 
@@ -156,5 +154,4 @@ class CascadeTemplate(StandardTemplate):
 |---|---|
 | `standard` | 基本レイアウト（タイトル + サブタイトル + 中央デバイス） |
 | `panoramic` | 連続する波形背景を持つレイアウト |
-| `perspective` | パースペクティブ変形 + パノラマ背景 |
-| `cascade` | 複数デバイスをカスケード状に配置 |
+| `perspective` | 単一3D変形、および複数デバイスの対角線レイアウト |

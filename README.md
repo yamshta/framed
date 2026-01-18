@@ -40,7 +40,7 @@ pip install -e .
 framed generate-samples
 
 # 特定のテンプレートのみ生成
-framed generate-samples --template cascade
+framed generate-samples --template perspective
 ```
 
 ## 📖 使い方

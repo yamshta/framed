@@ -19,6 +19,14 @@ devices:
 languages:
   - ja
 
+groups:
+  - output: "perspective_composite.png"
+    template: "perspective"
+    screens:
+      - "onboarding"
+      - "home_empty" # Center
+      - "inbox"      # Front (Right)
+
 screenshots:
   "onboarding":
     background_color: "#F5F5F7"

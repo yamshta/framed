@@ -8,11 +8,12 @@ template_settings:
 
 config:
   output_dir: "."
+  raw_dir: "../../_raw_samples/ja"  # Shared sample screenshots (not a template)
   project: "N/A"
   scheme: "N/A"
 
 devices:
-  - name: "raws"
+  - name: ""
     id: "N/A"
 
 languages:
