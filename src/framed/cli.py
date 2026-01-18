@@ -13,7 +13,8 @@ def init():
     click.echo("Initializing framed...")
 
 @main.command()
-def run():
+@click.option('--skip-capture', is_flag=True, help='Skip simulator capture and process existing raw screenshots only.')
+def run(skip_capture):
     """Run the full screenshot generation pipeline"""
     from .config import load_config
     from .runner import Runner
@@ -21,7 +22,7 @@ def run():
     try:
         config = load_config()
         runner = Runner(config)
-        runner.run()
+        runner.run(skip_capture=skip_capture)
         click.echo("✅ Pipeline completed!")
     except Exception as e:
         click.echo(f"❌ Error: {e}", err=True)
