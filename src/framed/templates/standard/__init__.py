@@ -32,35 +32,8 @@ class StandardTemplate(Template):
         canvas = Image.new('RGB', (self.CANVAS_WIDTH, self.CANVAS_HEIGHT), bg_color)
         draw = ImageDraw.Draw(canvas)
         
-        # Texts
-        title = text_config.get('title_text', "")
-        subtitle = text_config.get('subtitle_text', "")
-        
-        # Fonts
-        title_font = self._load_font(95, bold=True)
-        subtitle_font = self._load_font(45, bold=False)
-        
         # === Draw Text ===
-        current_y = self.HEADER_MARGIN
-        
-        # Title
-        if title:
-            lines = title.split('\n')
-            for line in lines:
-                bbox = draw.textbbox((0, 0), line, font=title_font)
-                w = bbox[2] - bbox[0]
-                h = bbox[3] - bbox[1]
-                draw.text(((self.CANVAS_WIDTH - w) / 2, current_y), line, font=title_font, fill=text_color)
-                current_y += h + self.LINE_SPACING
-        
-        current_y += (self.CAPTION_SPACING - self.LINE_SPACING)
-        
-        # Subtitle
-        if subtitle:
-            bbox = draw.textbbox((0, 0), subtitle, font=subtitle_font)
-            w = bbox[2] - bbox[0]
-            draw.text(((self.CANVAS_WIDTH - w) / 2, current_y), subtitle, font=subtitle_font, fill=subtitle_color)
-            current_y += bbox[3] - bbox[1]
+        current_y = self._draw_text(draw, text_config)
             
         # === Place Device ===
         if device_frame:
@@ -82,6 +55,39 @@ class StandardTemplate(Template):
 
         # Final Resize
         return canvas.resize(self.APP_STORE_SIZE, Image.Resampling.LANCZOS)
+
+    def _draw_text(self, draw: ImageDraw.ImageDraw, text_config: dict) -> int:
+        text_color = text_config.get('text_color', '#1D1D1F')
+        subtitle_color = text_config.get('subtitle_color', '#86868B')
+        title = text_config.get('title_text', "")
+        subtitle = text_config.get('subtitle_text', "")
+        
+        # Fonts
+        title_font = self._load_font(95, bold=True)
+        subtitle_font = self._load_font(45, bold=False)
+        
+        current_y = self.HEADER_MARGIN
+        
+        # Title
+        if title:
+            lines = title.split('\n')
+            for line in lines:
+                bbox = draw.textbbox((0, 0), line, font=title_font)
+                w = bbox[2] - bbox[0]
+                h = bbox[3] - bbox[1]
+                draw.text(((self.CANVAS_WIDTH - w) / 2, current_y), line, font=title_font, fill=text_color)
+                current_y += h + self.LINE_SPACING
+        
+        current_y += (self.CAPTION_SPACING - self.LINE_SPACING)
+        
+        # Subtitle
+        if subtitle:
+            bbox = draw.textbbox((0, 0), subtitle, font=subtitle_font)
+            w = bbox[2] - bbox[0]
+            draw.text(((self.CANVAS_WIDTH - w) / 2, current_y), subtitle, font=subtitle_font, fill=subtitle_color)
+            current_y += bbox[3] - bbox[1]
+            
+        return current_y
 
     def _load_font(self, size: int, bold: bool = False):
         # ... logic ported from processor.py ...

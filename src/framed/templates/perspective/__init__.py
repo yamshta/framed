@@ -45,34 +45,13 @@ class PerspectiveTemplate(StandardTemplate):
         # 3. Text (Same as Standard)
         self._draw_text(draw, text_config)
         
-        # 4. Prepare Device Image (Standard Composition first)
-        # We need the combined device+screenshot image to apply perspective to it.
-        # StandardTemplate puts it at specific Y, but we want the raw composited device first.
-        # Since StandardTemplate doesn't expose a "get_composed_device" method easily without placing it,
-        # we'll recreate the composition here or refactor StandardTemplate. 
-        # For now, let's just compose it manually here as we have the assets.
-        
+        # 4. Prepare Device Image
         if device_frame:
-             # Resize screenshot to fit into device frame (Standard logic)
-             # Hardcoded values from StandardTemplate for simplicity/consistency
-             ss_width = 1206
-             ss_height = 2622
-             
-             # If using our standard bezel.png (1290x2796), inner screen is roughly centered
-             # Bezel size: 1290x2796
-             # Screen size: 1179x2556 (approx iPhone 15 Pro) 
-             # Wait, StandardTemplate uses hardcoded 1206x2622 for screenshot resize, 
-             # and pastes it at (42, 87).
-             
-             screenshot_resized = screenshot.resize((1206, 2622), Image.LANCZOS)
-             
-             # Create a temporary canvas for the flat device
-             flat_device = Image.new('RGBA', device_frame.size, (0, 0, 0, 0))
-             flat_device.paste(screenshot_resized, (42, 87))
-             flat_device.alpha_composite(device_frame)
+             # device_frame already has screenshot and bezel composited.
+             flat_device = device_frame
         else:
-            # Fallback if no bezel
-            flat_device = screenshot.resize((1206, 2622), Image.LANCZOS)
+             # Fallback if no bezel
+             flat_device = screenshot.resize((1206, 2622), Image.LANCZOS)
 
         # 5. Calculate Perspective Transform
         # We want to tilt it.
