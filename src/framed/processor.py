@@ -5,6 +5,7 @@ from .config import Config
 
 from .templates.standard import StandardTemplate
 from .templates.panoramic import PanoramicTemplate
+from .templates.perspective import PerspectiveTemplate
 
 class Processor:
     def __init__(self, config: Config):
@@ -15,6 +16,9 @@ class Processor:
         if config.template == 'panoramic':
             self.template = PanoramicTemplate(config)
             print("  🎨 Using Panoramic Template")
+        elif config.template == 'perspective':
+            self.template = PerspectiveTemplate(config)
+            print("  🎨 Using Perspective Template")
         else:
             self.template = StandardTemplate(config)
             print("  🎨 Using Standard Template")
@@ -89,15 +93,18 @@ class Processor:
         # Prepare Text Config
         defaults = self.config.template_defaults or {}
         
-        text_config = {
-            'title_text': meta.get('title', {}).get(lang, ""),
-            'subtitle_text': meta.get('subtitle', {}).get(lang, ""),
-            'background_color': meta.get('background_color') or defaults.get('background_color', '#F5F5F7'),
-            'text_color': meta.get('text_color') or defaults.get('text_color', '#1D1D1F'),
-            'subtitle_color': meta.get('subtitle_color') or defaults.get('subtitle_color', '#86868B'),
-            # Panoramic specific config
-            'panoramic_color': meta.get('panoramic_color') or defaults.get('panoramic_color', '#C7C7CC')
-        }
+        # Start with a copy of defaults (so we inherit everything like perspective_tilt)
+        text_config = defaults.copy()
+        
+        # Override with meta (screenshot specific config)
+        if 'background_color' in meta: text_config['background_color'] = meta['background_color']
+        if 'text_color' in meta: text_config['text_color'] = meta['text_color']
+        if 'subtitle_color' in meta: text_config['subtitle_color'] = meta['subtitle_color']
+        if 'panoramic_color' in meta: text_config['panoramic_color'] = meta['panoramic_color']
+        
+        # Add text content
+        text_config['title_text'] = meta.get('title', {}).get(lang, "")
+        text_config['subtitle_text'] = meta.get('subtitle', {}).get(lang, "")
         
         # Calculate Index and Total for Panoramic Context
         # We need to find the index of this screenshot in the ordered config list

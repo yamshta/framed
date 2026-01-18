@@ -1,0 +1,11 @@
+description: "Hybrid layout: Index 0-2 = Tilted Perspective Flow, Index 3+ = Standard."
+defaults:
+  background_color: "#F5F5F7"
+  text_color: "#1D1D1F"
+  subtitle_color: "#86868B"
+  font_size_title: 95
+  font_size_subtitle: 45
+  
+  # Perspective specific (Currently hardcoded in __init__.py but placeholders for future)
+  perspective_tilt: 150
+  perspective_scale: 0.85
