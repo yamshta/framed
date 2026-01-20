@@ -11,6 +11,7 @@ class Processor:
     def __init__(self, config: Config):
         self.config = config
         self.bezel_path = Path(__file__).parent.parent.parent / "resources" / "bezel.png"
+
         
         # Select Template
         if config.template == 'panoramic':
@@ -26,6 +27,31 @@ class Processor:
         # Device specific constants for bezel composition
         self.SCREENSHOT_WIDTH = 1206
         self.SCREENSHOT_HEIGHT = 2622
+    
+    def _resolve_text(self, text_map: dict | str | None, lang: str) -> str:
+        """
+        Resolve text for a given language with fallback.
+        e.g. if lang is 'en-US' but map only has 'en', it will return 'en' value.
+        """
+        if not text_map:
+            return ""
+        
+        if isinstance(text_map, str):
+            return text_map
+            
+        # 1. Exact match
+        val = text_map.get(lang)
+        if val is not None: 
+            return val
+        
+        # 2. Base language fallback (en-US -> en)
+        if '-' in lang:
+            base_lang = lang.split('-')[0]
+            val = text_map.get(base_lang)
+            if val is not None:
+                return val
+                
+        return ""
 
     def process(self):
         """Apply frames and text to extracted screenshots."""
@@ -41,6 +67,8 @@ class Processor:
         if not screenshot_config:
             print("⚠️ No 'screenshots' config found. Skipping processing.")
             return
+
+
 
         for device in self.config.devices:
             dev_name = device['name']
@@ -59,6 +87,7 @@ class Processor:
                     src_dir = raw_dir / f"{dev_name}_{lang}"
                     dst_dir = final_dir / f"{dev_name}_{lang}"
                 
+
                 if not src_dir.exists():
                     continue
                     
@@ -116,12 +145,20 @@ class Processor:
                 # Prepare text config
                 defaults = self.config.template_defaults or {}
                 text_config = defaults.copy()
+                
+                # Merge group configuration (allows passing custom params like panorama_index)
+                text_config.update(group)
+                
                 if 'background_color' in meta: text_config['background_color'] = meta['background_color']
                 if 'text_color' in meta: text_config['text_color'] = meta['text_color']
                 if 'subtitle_color' in meta: text_config['subtitle_color'] = meta['subtitle_color']
                 if 'panoramic_color' in meta: text_config['panoramic_color'] = meta['panoramic_color']
-                text_config['title_text'] = meta.get('title', {}).get(lang, "")
-                text_config['subtitle_text'] = meta.get('subtitle', {}).get(lang, "")
+                if 'panoramic_color' in meta: text_config['panoramic_color'] = meta['panoramic_color']
+                
+                # Resolve text with fallback
+                text_config['title_text'] = self._resolve_text(meta.get('title'), lang)
+                text_config['subtitle_text'] = self._resolve_text(meta.get('subtitle'), lang)
+                
                 text_configs.append(text_config)
             
             if not device_frames:
@@ -192,8 +229,8 @@ class Processor:
         if 'panoramic_color' in meta: text_config['panoramic_color'] = meta['panoramic_color']
         
         # Add text content
-        text_config['title_text'] = meta.get('title', {}).get(lang, "")
-        text_config['subtitle_text'] = meta.get('subtitle', {}).get(lang, "")
+        text_config['title_text'] = self._resolve_text(meta.get('title'), lang)
+        text_config['subtitle_text'] = self._resolve_text(meta.get('subtitle'), lang)
         
         # Calculate Index and Total for Panoramic Context
         # We need to find the index of this screenshot in the ordered config list
