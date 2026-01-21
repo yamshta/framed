@@ -16,8 +16,15 @@ XCUITestの実行から画像抽出、デバイスフレーム合成、テキス
 
 ## 🚀 インストール
 
+### PyPIから（推奨）
 ```bash
-# リポジトリのルートで
+pip install framed-cli
+```
+
+### 開発版（リポジトリから）
+```bash
+git clone https://github.com/yamshta/framed.git
+cd framed
 pip install -e .
 ```
 
@@ -252,6 +259,100 @@ docs/screenshots_framed/
 
 - ヒラギノ角ゴシックフォントがシステムにインストールされているか確認
 - macOSの標準フォントディレクトリ（`/System/Library/Fonts/`）にアクセスできるか確認
+
+## 🚢 リリースフロー（開発者向け）
+
+### リリース手順
+
+#### 1. バージョンの更新
+
+以下のファイルでバージョンを更新:
+
+```python
+# src/framed/__init__.py
+__version__ = "0.2.0"  # 新しいバージョン
+```
+
+```toml
+# pyproject.toml
+[project]
+version = "0.2.0"  # 新しいバージョン
+```
+
+#### 2. 変更をコミット
+
+```bash
+git add src/framed/__init__.py pyproject.toml
+git commit -m "Bump version to 0.2.0"
+git push origin main
+```
+
+#### 3. タグを作成してプッシュ
+
+```bash
+# タグを作成（vプレフィックス必須）
+git tag v0.2.0
+
+# タグをプッシュ
+git push origin v0.2.0
+```
+
+#### 4. 自動公開
+
+GitHub Actionsが自動的に以下を実行します:
+
+1. パッケージのビルド
+2. TestPyPIへの公開（設定済みの場合）
+3. PyPIへの公開
+
+進行状況は以下で確認できます:
+- https://github.com/yamshta/framed/actions
+
+#### 5. リリース確認
+
+```bash
+# 最新バージョンの確認
+pip index versions framed-cli
+
+# インストールテスト
+pip install --upgrade framed-cli
+framed --version
+```
+
+### 手動リリース（緊急時）
+
+GitHub Actionsが使えない場合:
+
+```bash
+# 仮想環境の作成
+python3 -m venv venv
+source venv/bin/activate
+
+# ビルドツールのインストール
+pip install build twine
+
+# ビルド
+python -m build
+
+# 検証
+twine check dist/*
+
+# PyPIへアップロード
+twine upload dist/*
+```
+
+### バージョニングルール
+
+[Semantic Versioning](https://semver.org/lang/ja/) に従います:
+
+- **MAJOR** (1.0.0): 互換性のない変更
+- **MINOR** (0.1.0): 後方互換性のある機能追加
+- **PATCH** (0.0.1): 後方互換性のあるバグ修正
+
+例:
+- `0.1.0` → `0.1.1`: バグ修正
+- `0.1.0` → `0.2.0`: 新機能追加
+- `0.9.0` → `1.0.0`: 安定版リリース、破壊的変更
 
 ## 📝 ライセンス
 

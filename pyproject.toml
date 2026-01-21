@@ -10,7 +10,7 @@ readme = "README.md"
 requires-python = ">=3.10"
 license = {file = "LICENSE"}
 authors = [
-  {name = "Koe Team", email = "dev@koe.app"}
+  {name = "yamshta", email = "shymst125@gmail.com"}
 ]
 classifiers = [
     "Development Status :: 3 - Alpha",
