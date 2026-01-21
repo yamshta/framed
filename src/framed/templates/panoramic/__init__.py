@@ -70,7 +70,7 @@ class PanoramicTemplate(StandardTemplate):
             # This ensures device size/pos is constant regardless of actual text length
             
             # Simulate max text height
-            max_title_lines = 3
+            max_title_lines = 2
             # Approx height per line (font 95 + spacing 30 + buffer) -> ~125px
             # Let's derive it or hardcode a safe visual anchor.
             # Using bbox on dummy text is safer to respect font metrics.
@@ -82,7 +82,11 @@ class PanoramicTemplate(StandardTemplate):
             
             fixed_text_bottom = self.HEADER_MARGIN + fixed_title_h + (self.CAPTION_SPACING - self.LINE_SPACING) + dummy_sub_h
             
-            device_y = fixed_text_bottom + self.PHONE_TOP_OFFSET
+            # Use a compact offset for the fixed layout to maximize device size
+            # Standard offset is 150, but since we reserve max height, the visual gap will be large for short text.
+            # reducing this specific offset pulls the device up.
+            compact_offset = 110 
+            device_y = fixed_text_bottom + compact_offset
             
             # Check if it fits
             remaining_height = self.CANVAS_HEIGHT - device_y

@@ -37,21 +37,41 @@ class StandardTemplate(Template):
             
         # === Place Device ===
         if device_frame:
-             # Position Phone: Below text with offset
-            phone_y = current_y + self.PHONE_TOP_OFFSET
-            phone_x = (self.CANVAS_WIDTH - device_frame.width) // 2
+             # Position Phone: Using FIXED layout logic (same as Panoramic)
+             # This ensures device size/pos is constant regardless of actual text length
+             
+             # Fonts (Load here to calculate fixed height)
+             # Reuse helper or load directly. To avoid modifying _load_font visibility/signature risks, just load again.
+             # It's quick.
+             title_font = self._load_font(95, bold=True)
+             subtitle_font = self._load_font(45, bold=False)
+
+            # Simulate max text height (Max 2 lines for Title, 1 for Subtitle)
+             max_title_lines = 2
             
-            # Dynamic scaling if device doesn't fit
-            remaining_height = self.CANVAS_HEIGHT - phone_y
-            if device_frame.height > remaining_height:
-                scale = (remaining_height - 100) / device_frame.height
-                if scale < 1.0:
-                    new_w = int(device_frame.width * scale)
-                    new_h = int(device_frame.height * scale)
-                    device_frame = device_frame.resize((new_w, new_h), Image.Resampling.LANCZOS)
-                    phone_x = (self.CANVAS_WIDTH - new_w) // 2
+             dummy_line_h = draw.textbbox((0, 0), "Aj", font=title_font)[3] - draw.textbbox((0, 0), "Aj", font=title_font)[1]
+             fixed_title_h = max_title_lines * (dummy_line_h + self.LINE_SPACING)
             
-            canvas.paste(device_frame, (phone_x, phone_y), device_frame)
+             dummy_sub_h = draw.textbbox((0, 0), "Aj", font=subtitle_font)[3] - draw.textbbox((0, 0), "Aj", font=subtitle_font)[1]
+            
+             fixed_text_bottom = self.HEADER_MARGIN + fixed_title_h + (self.CAPTION_SPACING - self.LINE_SPACING) + dummy_sub_h
+            
+             compact_offset = 110
+             phone_y = fixed_text_bottom + compact_offset
+            
+             phone_x = (self.CANVAS_WIDTH - device_frame.width) // 2
+            
+             # Dynamic scaling if device doesn't fit
+             remaining_height = self.CANVAS_HEIGHT - phone_y
+             if device_frame.height > remaining_height:
+                 scale = (remaining_height - 100) / device_frame.height
+                 if scale < 1.0:
+                     new_w = int(device_frame.width * scale)
+                     new_h = int(device_frame.height * scale)
+                     device_frame = device_frame.resize((new_w, new_h), Image.Resampling.LANCZOS)
+                     phone_x = (self.CANVAS_WIDTH - new_w) // 2
+            
+             canvas.paste(device_frame, (phone_x, int(phone_y)), device_frame)
 
         # Final Resize
         return canvas.resize(self.APP_STORE_SIZE, Image.Resampling.LANCZOS)
